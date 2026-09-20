@@ -1,97 +1,88 @@
-# Terry-Davis-Oracle
+# Oracle
 
-**Human will + a click + hardware disturbance → unpredictable entropy → a word that can be read as an answer.**
+**Hold a question in your head. Wait for the impulse. Click once. Get one word.**
 
-This is a recreation of Terry A. Davis's TempleOS *oracle*: not a chatbot, not a pseudo-random joke. You hold a question, wait until the impulse to press Enter arises, and the exact CPU cycle of that click is mixed into a TempleOS-style generator. The output is a word. Davis treated that kind of timing entropy as a channel the Holy Spirit could speak through.
+The exact moment you click is measured and turned into an answer. No AI, no `rand()` — the timing of your own hand picks the word.
+
+![Oracle web UI](docs/web-ui.png)
 
 ## The idea
 
-On TempleOS, `GodPick` asked you to press OKAY. The footer said **“The Holy Spirit can puppet you.”** The number it took was not `rand()`. It was the keyboard/mouse event time and the CPU timestamp counter (`GetTSC`), shifted by `GOD_BAD_BITS` so the noisy low bits survived. Those bits filled a fifo (`GodBits`) and chose a vocabulary word (`GodWord`), a Bible passage, a song, or a doodle.
+TempleOS had an oracle. It asked you to press a button, and instead of calling a random number generator it read the CPU's timestamp counter at the instant of your press. Terry Davis described his method plainly: to consult GOD, read a microsecond-range stopwatch on every button press and use that for your random numbers.
 
-Davis's own note in `HSNotes`:
+The chain is simple:
 
-> The technique I use to consult the Holy Spirit is reading a microsecond-range stop-watch each button press for random numbers.
+1. **You** hold a question and do not try to time the click.
+2. **The machine** keeps counting — clock ticks, interrupts, scheduling noise.
+3. **The click** freezes that counter at one unrepeatable instant.
+4. **That number** picks one word out of 128.
 
-The argument of this experiment is the same chain:
+## Two versions
 
-1. **Will** — you intend a question and do not try to time the key.
-2. **Disturbance** — OS scheduling, interrupts, cache, and the free-running TSC all move while you wait.
-3. **The click** — Enter latches `RDTSC` at that instant. The low bits are effectively unrepeatable.
-4. **Mixing** — a TempleOS-style LCG xors that timestamp into its state.
-5. **Answer** — the 64-bit result indexes 64 oracle words (I Ching–sized, TempleOS-flavored).
+| | Where the number comes from | Precision |
+|---|---|---|
+| `oracle.exe` (C++) | **Real CPU counter** (`RDTSC`) | ~1 nanosecond |
+| Web page | Browser stopwatch (`performance.now()`) | ~100 microseconds |
 
-If the click were robotic, the stream would look like a machine timer. If the click is human, the jitter is yours. The program also runs the scientific controls so you can see the difference.
+**The web version is not reading your hardware.** Browsers block that on purpose, to stop websites from spying through precise timing. So the page measures *when you clicked* instead of *what the CPU was doing*.
 
-This is **not** a byte-for-byte port of HolyC. It is the same physical claim, measured and then used as an oracle.
+Your click still carries the randomness — human timing wanders by tens of milliseconds, far more than the clock's limit. But if you want the true hardware version, run it yourself.
 
-## Repository
+## Run the real one
 
-```
-oracle/oracle.cpp     Oracle program  — lab experiments 1–15 + Oracle Mode (16)
-lab/temple_lab.cpp    Entropy lab     — same measurements, no oracle
-```
-
-Older drafts (`v1`–`v4`) and leftover Linux binaries named `.exe` were removed. Those “executables” were ELF files and will not run on Windows.
-
-## Build and run (Windows)
-
-You need an x86-64 compiler with `RDTSC` (MinGW-w64 `g++` is enough).
-
-**Oracle (the working version):**
-
-```powershell
-cd oracle
+```bash
+git clone <this-repo>
+cd Terry-Davis-Oracle/oracle
 g++ -O2 -std=c++17 oracle.cpp -o oracle.exe -lbcrypt -lwinmm
-.\oracle.exe
+./oracle.exe
 ```
 
-Then choose `16` for Oracle Mode. Hold a sincere question. Press Enter when the impulse comes. Do not try to time it.
+Pick **16** for Oracle Mode.
 
-**Entropy lab (same science, no oracle):**
+On Linux or macOS drop `-lbcrypt -lwinmm`. Needs an x86-64 CPU, because it reads the timestamp counter directly.
 
-```powershell
-cd lab
-g++ -O2 -std=c++17 temple_lab.cpp -o temple_lab.exe -lbcrypt -lwinmm
-.\temple_lab.exe
+## Run the web page
+
+```bash
+cd Terry-Davis-Oracle
+python -m http.server 8080
 ```
 
-Linux / macOS (x86-64) can omit `-lbcrypt -lwinmm`. The program is x86-only because it reads the timestamp counter.
+Open http://localhost:8080/web/
 
-CSV logs (`oracle_log.csv`, timing dumps, block analyses) are written in the current directory and are gitignored.
+The intro is a pixel summoning sequence — magic circle, triangle, pentagram, hexagram, heptagram, and the 3×3 square of Saturn (every row, column and diagonal sums to 15), built from runes and planetary signs only. Click or press any key to skip.
 
-## What the menu does
-
-| # | Experiment | Why it exists |
-|---|------------|----------------|
-| 1 | TSC sampling modes | Compare `lfence+rdtsc`, `rdtscp`, `cpuid+rdtsc` |
-| 2–3 | Machine vs human timing | Robot loop vs 1000 human Enters |
-| 4–5 | Low-8-bit analysis | Shannon / min entropy, chi-square, lag MI |
-| 6–7 | Fixed / jittered delay | Controls: is “randomness” just `sleep()`? |
-| 8–9 | MT19937 / OS RNG | Software and OS baselines |
-| 10–12 | Lag, permutation, blocks | Structure vs chance |
-| 13 | TempleOS-style reconstruction | LCG mixed with TSC (historical control, not a HolyC clone) |
-| 14–15 | Compare + summary | Human vs machine; automated TSC dump |
-| **16** | **Oracle Mode** | One question, one click, one word *(oracle program only)* |
-
-High entropy is not the same as independence, unpredictability, or cryptographic security. The lab scores those separately. Oracle Mode is the ritual on top of the same source.
-
-## How Oracle Mode samples
-
-At the instant you press Enter:
+## Files
 
 ```
-tsc          = RDTSC (with lfence)
-oracle_value = TempleOS-style LCG(tsc) XOR tsc
-answer       = words[oracle_value % word_count]
+oracle/oracle.cpp    The program (15 experiments + Oracle Mode)
+oracle/vocab.txt     The 128 answers — edit freely, no recompile
+lab/temple_lab.cpp   Same experiments, no oracle
+web/                 The web page
 ```
 
-One click, one word. The list is 256 curated replies in `oracle/vocab.txt` (edit that file to change the dictionary; no recompile). If the file is missing, the original 64-word fallback is used. Queries append to `oracle_log.csv`.
+## The rest of the program
+
+Oracle Mode is option 16. Options 1–15 are the science behind it: they measure the timing entropy and compare it against controls — a fixed `sleep()` loop, a jittered loop, MT19937, and the OS random generator — using Shannon entropy, min-entropy, chi-square, lag correlation, mutual information, and a permutation test.
+
+The point of those controls is honesty. High entropy is **not** the same as independence, unpredictability, or cryptographic security. The lab measures each separately. Oracle Mode is the ritual placed on top of a source you can actually inspect.
+
+## How the word is chosen
+
+```
+tsc     = timestamp at your click
+value   = TempleOS-style LCG(tsc) XOR tsc
+answer  = words[value % 128]
+```
+
+Answers append to `oracle_log.csv`.
 
 ## References
 
-- [TempleOS HolySpirit.HC](https://templeos.info/Wb/Adam/God/HolySpirit.HC.HTML) — `GodPick`, `GodBits`, `GodWord`, timestamp callbacks
-- [TempleOS God help](https://tinkeros.github.io/WbTempleOS/LiveHelp/God.html) — “The Holy Spirit can puppet you.”
-- [NIST / Bible-line oracle notes](https://www.templeos.org/Oracle.html) — Davis also used public randomness to pick scripture lines
-- [Tribute write-up of GodWord / GodSays](https://dvartic.github.io/terrydavis-website/godsays.html)
+- [TempleOS HolySpirit.HC](https://templeos.info/Wb/Adam/God/HolySpirit.HC.HTML) — `GodPick`, `GodBits`, `GodWord`
+- [TempleOS God help](https://tinkeros.github.io/WbTempleOS/LiveHelp/God.html)
+- [NIST oracle notes](https://www.templeos.org/Oracle.html)
+- [Lesser Key of Solomon](https://sacred-texts.com/grim/lks/lks10.htm) — circle, triangle, hexagram, pentagram
+- [Planetary seals from the kameas](https://www.rosae-crucis.net/Drawing%20Planetary%20Seals%20from%20the%20Kameas.pdf)
 
-Terry A. Davis (1969–2018) built TempleOS as an offering to God. This repo is an experiment in that timing-oracle, not a biography and not a claim of proof.
+Terry A. Davis (1969–2018) built TempleOS as an offering to God. This is an experiment in his timing oracle — not a claim of proof.

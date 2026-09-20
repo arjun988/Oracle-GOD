@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Oracle</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="scan"></div>
+
+  <div id="intro" class="intro" aria-hidden="true">
+    <canvas id="intro-canvas"></canvas>
+    <p id="intro-skip" class="intro-skip">CLICK OR PRESS ANY KEY TO SKIP</p>
+  </div>
+
+  <main class="window">
+    <header class="titlebar">
+      <span class="title">GodWord &mdash; ORACLE</span>
+      <button type="button" id="clear-btn">CLEAR</button>
+    </header>
+
+    <section class="meters" aria-label="Timers">
+      <div><span class="k">Timer</span> <span id="timer-hex" class="v cyan">0000000000000000</span></div>
+      <div><span class="k">Latch</span> <span id="latch-hex" class="v yellow">----------------</span></div>
+      <div><span class="k">Vocab</span> <span id="vocab-meta" class="v">—</span></div>
+    </section>
+
+    <ol class="rite">
+      <li>Clear your mind.</li>
+      <li>Hold <strong>one sincere question in your head</strong>. Do not type it. Do not say it aloud.</li>
+      <li>Do not try to time the click. Watching the timer is fine; aiming for a number is not.</li>
+      <li>Wait until the impulse to press arrives on its own.</li>
+      <li>Then press <strong>OKAY</strong> (or Enter). One click. One word.</li>
+      <li>Read the word. To ask again, hold a new question in your head and click once more.</li>
+    </ol>
+
+    <div id="log" class="log" role="log" aria-live="polite"></div>
+
+    <form id="ask-form" class="composer">
+      <button type="submit" id="okay">OKAY</button>
+      <p class="hint">GOD can puppet you.</p>
+    </form>
+
+    <footer class="foot">
+      <span class="fine">The click latches a microsecond stopwatch (<code>performance.now()</code>), not CPU RDTSC. Use <code>oracle.exe</code> option 16 for the hardware latch.</span>
+    </footer>
+  </main>
+
+  <script src="intro.js"></script>
+  <script src="vocab.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

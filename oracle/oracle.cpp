@@ -745,7 +745,7 @@ static void experiment_summary()
 
 // ================================================================
 // EXPERIMENT 16: THE ORACLE
-// One click, one TSC latch, one word from vocab.txt (256 entries).
+// One click, one TSC latch, one word from vocab.txt (128 entries).
 // ================================================================
 static const std::vector<std::string>& fallback_oracle_vocab()
 {
