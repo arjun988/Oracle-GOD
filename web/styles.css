@@ -105,7 +105,14 @@ body {
   text-transform: uppercase;
 }
 
-.titlebar button {
+.titlebar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.titlebar button,
+.titlebar .tb-link {
   background: var(--gray);
   color: #000;
   border: 2px solid #fff;
@@ -115,9 +122,12 @@ body {
   font-size: 12px;
   padding: 4px 10px;
   cursor: pointer;
+  text-decoration: none;
+  line-height: 1.2;
 }
 
-.titlebar button:active {
+.titlebar button:active,
+.titlebar .tb-link:active {
   border-color: #555;
   border-right-color: #fff;
   border-bottom-color: #fff;

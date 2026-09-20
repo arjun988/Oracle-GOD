@@ -4,6 +4,8 @@
 
 The exact moment you click is measured and turned into an answer. No AI, no `rand()` — the timing of your own hand picks the word.
 
+**Try it: [oracle-god.vercel.app](https://oracle-god.vercel.app)**
+
 ![Oracle web UI](docs/web-ui.png)
 
 ## The idea
@@ -31,8 +33,8 @@ Your click still carries the randomness — human timing wanders by tens of mill
 ## Run the real one
 
 ```bash
-git clone <this-repo>
-cd Terry-Davis-Oracle/oracle
+git clone https://github.com/arjun988/Oracle-GOD.git
+cd Oracle-GOD/oracle
 g++ -O2 -std=c++17 oracle.cpp -o oracle.exe -lbcrypt -lwinmm
 ./oracle.exe
 ```
@@ -41,10 +43,10 @@ Pick **16** for Oracle Mode.
 
 On Linux or macOS drop `-lbcrypt -lwinmm`. Needs an x86-64 CPU, because it reads the timestamp counter directly.
 
-## Run the web page
+## Run the web page locally
 
 ```bash
-cd Terry-Davis-Oracle
+cd Oracle-GOD
 python -m http.server 8080
 ```
 
@@ -58,7 +60,12 @@ The intro is a pixel summoning sequence — magic circle, triangle, pentagram, h
 oracle/oracle.cpp    The program (15 experiments + Oracle Mode)
 oracle/vocab.txt     The 128 answers — edit freely, no recompile
 lab/temple_lab.cpp   Same experiments, no oracle
-web/                 The web page
+web/index.html       The page
+web/intro.js         Pixel summoning intro
+web/app.js           Click latch, LCG, answer log
+web/vocab.js         The 128 answers, embedded for the web
+web/styles.css       Styling
+docs/web-ui.png      Screenshot above
 ```
 
 ## The rest of the program
@@ -75,7 +82,7 @@ value   = TempleOS-style LCG(tsc) XOR tsc
 answer  = words[value % 128]
 ```
 
-Answers append to `oracle_log.csv`.
+The C++ version appends every answer to `oracle_log.csv`. The web page keeps its history in your browser only.
 
 ## References
 
