@@ -745,32 +745,11 @@ static void experiment_summary()
 
 // ================================================================
 // EXPERIMENT 16: THE ORACLE
+// One click, one TSC latch, one word from vocab.txt (256 entries).
 // ================================================================
-static void experiment_oracle()
+static const std::vector<std::string>& fallback_oracle_vocab()
 {
-    separator();
-    std::cout << "EXPERIMENT 16: THE ORACLE\n\n";
-    std::cout << "Instructions:\n";
-    std::cout << "1. Clear your mind and focus on a specific, sincere question.\n";
-    std::cout << "2. Do not try to time your action. Let the impulse to press ENTER arise naturally.\n";
-    std::cout << "3. The exact microsecond of your action will sample the CPU's Timestamp Counter,\n";
-    std::cout << "   mixing human free will with hardware entropy to select a response.\n\n";
-    
-    std::cout << "Focus on your question...\n";
-    std::cout << "Press ENTER when you are ready to receive the answer.\n";
-    
-    wait_for_enter();
-    
-    // Capture the exact TSC at the moment of human action
-    uint64_t tsc = read_tsc_lfence();
-    
-    // Run it through the TempleOS-style RNG for authentic mixing
-    TempleOSStyleReconstruction rng(tsc);
-    uint64_t oracle_value = rng.next(tsc, true);
-    
-    // Curated list of 64 archetypal words/phrases (64 is 2^6, maps perfectly to bits)
-    // Inspired by the I Ching and TempleOS vocabulary
-    const std::vector<std::string> oracle_words = {
+    static const std::vector<std::string> words = {
         "YES", "NO", "WAIT", "LOOK CLOSER", "TRUST", "FEAR NOT", "BE PATIENT", "ACT NOW",
         "SEEK", "YOU ALREADY KNOW", "LET GO", "HOLD FAST", "TRUTH", "ILLUSION", "PEACE", "STORM",
         "LIGHT", "DARKNESS", "BEGIN", "END", "GROW", "RELEASE", "FORGIVE", "LEARN",
@@ -780,19 +759,68 @@ static void experiment_oracle()
         "PATH", "DOOR", "KEY", "LOCK", "OPEN", "CLOSE", "RISE", "FALL",
         "FLOW", "STILL", "HEAR", "LISTEN", "OBSERVE", "ACT", "REST", "AWAKE"
     };
-    
-    // Map the 64-bit oracle value to the 64-word list uniformly
+    return words;
+}
+
+static std::string trim_vocab_line(std::string line)
+{
+    const auto first = line.find_first_not_of(" \t\r\n");
+    if (first == std::string::npos) return {};
+    const auto last = line.find_last_not_of(" \t\r\n");
+    line = line.substr(first, last - first + 1);
+    if (!line.empty() && line[0] == '#') return {};
+    return line;
+}
+
+static std::vector<std::string> load_oracle_vocab(std::string& source_name)
+{
+    source_name = "built-in fallback";
+    std::ifstream file("vocab.txt");
+    std::vector<std::string> words;
+    if (file) {
+        std::string line;
+        while (std::getline(file, line)) {
+            std::string word = trim_vocab_line(line);
+            if (!word.empty()) words.push_back(word);
+        }
+    }
+    if (words.empty()) return fallback_oracle_vocab();
+    source_name = "vocab.txt";
+    return words;
+}
+
+static void experiment_oracle()
+{
+    separator();
+    std::cout << "EXPERIMENT 16: THE ORACLE\n\n";
+    std::cout << "Instructions:\n";
+    std::cout << "1. Clear your mind and focus on a specific, sincere question.\n";
+    std::cout << "2. Do not try to time your action. Let the impulse to press ENTER arise naturally.\n";
+    std::cout << "3. The exact microsecond of your action will sample the CPU's Timestamp Counter,\n";
+    std::cout << "   mixing human free will with hardware entropy to select one word.\n\n";
+
+    std::string source_name;
+    std::vector<std::string> oracle_words = load_oracle_vocab(source_name);
+    std::cout << "Vocabulary              : " << oracle_words.size() << " (" << source_name << ")\n\n";
+    std::cout << "Focus on your question...\n";
+    std::cout << "Press ENTER when you are ready to receive the answer.\n";
+
+    wait_for_enter();
+
+    uint64_t tsc = read_tsc_lfence();
+    TempleOSStyleReconstruction rng(tsc);
+    uint64_t oracle_value = rng.next(tsc, true);
+
     size_t index = static_cast<size_t>(oracle_value % oracle_words.size());
     std::string answer = oracle_words[index];
-    
+
     std::cout << "\n================================================================\n";
     std::cout << "  TSC CAPTURED  : " << tsc << "\n";
     std::cout << "  ORACLE VALUE  : " << oracle_value << "\n";
     std::cout << "================================================================\n";
     std::cout << "\n          >>>  " << answer << "  <<<\n\n";
     std::cout << "================================================================\n";
-    
-    // Log the oracle query to a file for historical tracking
+
     std::ofstream file("oracle_log.csv", std::ios::app);
     if (file.is_open()) {
         file << tsc << "," << oracle_value << "," << csv_escape(answer) << "\n";

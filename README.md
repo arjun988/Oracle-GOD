@@ -82,10 +82,10 @@ At the instant you press Enter:
 ```
 tsc          = RDTSC (with lfence)
 oracle_value = TempleOS-style LCG(tsc) XOR tsc
-answer       = words[oracle_value % 64]
+answer       = words[oracle_value % word_count]
 ```
 
-The word list is 64 archetypal replies (`YES`, `WAIT`, `LOOK CLOSER`, `LET GO`, …). Queries append to `oracle_log.csv`.
+One click, one word. The list is 256 curated replies in `oracle/vocab.txt` (edit that file to change the dictionary; no recompile). If the file is missing, the original 64-word fallback is used. Queries append to `oracle_log.csv`.
 
 ## References
 
