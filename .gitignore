@@ -1,0 +1,11 @@
+# Build artifacts
+*.exe
+*.o
+*.obj
+*.out
+*.pdb
+*.ilk
+
+# Experiment output written next to the binary
+*.csv
+oracle_log.csv

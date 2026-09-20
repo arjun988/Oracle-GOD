@@ -1,14 +1,20 @@
 /*
 ====================================================================
-        TSC / HUMAN ENTROPY LABORATORY v3.1 (Refined & Complete)
+        TERRY-DAVIS-ORACLE  |  TSC / HUMAN ENTROPY LABORATORY
 ====================================================================
-Purpose: Measure CPU timestamp-counter behavior and human timing 
-         variability with rigorous controls to eliminate technical artifacts.
-         
-Note on TempleOS: Terry Davis designed the TempleOS RNG to be an "Oracle" 
-for communicating with God. This refined code ensures that any 
-unpredictability observed is genuinely rooted in physical/human interaction 
-or hardware entropy, rather than software bugs or OS artifacts.
+TempleOS treated a human click as the moment God could "puppet" you:
+the exact cycle of the CPU timestamp counter at that impulse mixes
+human will with hardware disturbance into unpredictable entropy,
+then maps that entropy onto a word — an oracle answer.
+
+This program:
+  - measures TSC and human-timing entropy with scientific controls
+  - reconstructs a TempleOS-style LCG mixed with the timestamp
+  - offers Oracle Mode: one sincere question, one Enter, one word
+
+High entropy != independence != unpredictability != crypto security.
+Those properties are measured separately. Oracle Mode is the ritual
+layer on top of the same physical source.
 ====================================================================
 */
 
@@ -37,6 +43,7 @@ or hardware entropy, rather than software bugs or OS artifacts.
     #include <windows.h>
     #include <bcrypt.h>
     #pragma comment(lib, "bcrypt.lib")
+    #pragma comment(lib, "winmm.lib")
 #endif
 
 #ifdef _MSC_VER
@@ -676,7 +683,6 @@ public:
     uint64_t next(uint64_t tsc, bool use_tsc)
     {
         uint64_t res = state;
-        // FIXED: Corrected to match C/C++ operator precedence of the original HolyC
         uint64_t term1 = LCG_A * res;
         uint64_t term2 = ((res & 0xFFFFFFFF0000ULL) >> 16) + LCG_C;
         uint64_t transformed = term1 ^ term2;
@@ -737,23 +743,85 @@ static void experiment_summary()
     std::cout << "\nSaved: summary_blocks.csv\n";
 }
 
+// ================================================================
+// EXPERIMENT 16: THE ORACLE
+// ================================================================
+static void experiment_oracle()
+{
+    separator();
+    std::cout << "EXPERIMENT 16: THE ORACLE\n\n";
+    std::cout << "Instructions:\n";
+    std::cout << "1. Clear your mind and focus on a specific, sincere question.\n";
+    std::cout << "2. Do not try to time your action. Let the impulse to press ENTER arise naturally.\n";
+    std::cout << "3. The exact microsecond of your action will sample the CPU's Timestamp Counter,\n";
+    std::cout << "   mixing human free will with hardware entropy to select a response.\n\n";
+    
+    std::cout << "Focus on your question...\n";
+    std::cout << "Press ENTER when you are ready to receive the answer.\n";
+    
+    wait_for_enter();
+    
+    // Capture the exact TSC at the moment of human action
+    uint64_t tsc = read_tsc_lfence();
+    
+    // Run it through the TempleOS-style RNG for authentic mixing
+    TempleOSStyleReconstruction rng(tsc);
+    uint64_t oracle_value = rng.next(tsc, true);
+    
+    // Curated list of 64 archetypal words/phrases (64 is 2^6, maps perfectly to bits)
+    // Inspired by the I Ching and TempleOS vocabulary
+    const std::vector<std::string> oracle_words = {
+        "YES", "NO", "WAIT", "LOOK CLOSER", "TRUST", "FEAR NOT", "BE PATIENT", "ACT NOW",
+        "SEEK", "YOU ALREADY KNOW", "LET GO", "HOLD FAST", "TRUTH", "ILLUSION", "PEACE", "STORM",
+        "LIGHT", "DARKNESS", "BEGIN", "END", "GROW", "RELEASE", "FORGIVE", "LEARN",
+        "TEACH", "SILENCE", "SPEAK", "JOURNEY", "RETURN", "GIFT", "LOSS", "GAIN",
+        "SIMPLE", "COMPLEX", "UNITY", "DIVISION", "HARMONY", "CHAOS", "ORDER", "MERCY",
+        "JUSTICE", "GRACE", "STRENGTH", "WISDOM", "FAITH", "DOUBT", "HOPE", "LOVE",
+        "PATH", "DOOR", "KEY", "LOCK", "OPEN", "CLOSE", "RISE", "FALL",
+        "FLOW", "STILL", "HEAR", "LISTEN", "OBSERVE", "ACT", "REST", "AWAKE"
+    };
+    
+    // Map the 64-bit oracle value to the 64-word list uniformly
+    size_t index = static_cast<size_t>(oracle_value % oracle_words.size());
+    std::string answer = oracle_words[index];
+    
+    std::cout << "\n================================================================\n";
+    std::cout << "  TSC CAPTURED  : " << tsc << "\n";
+    std::cout << "  ORACLE VALUE  : " << oracle_value << "\n";
+    std::cout << "================================================================\n";
+    std::cout << "\n          >>>  " << answer << "  <<<\n\n";
+    std::cout << "================================================================\n";
+    
+    // Log the oracle query to a file for historical tracking
+    std::ofstream file("oracle_log.csv", std::ios::app);
+    if (file.is_open()) {
+        file << tsc << "," << oracle_value << "," << csv_escape(answer) << "\n";
+        file.close();
+    }
+}
+
+// ================================================================
+// MENU & MAIN
+// ================================================================
 static void print_menu()
 {
     separator();
-    std::cout << "        TSC / HUMAN ENTROPY LABORATORY v3.1\n\n"
+    std::cout << "        TERRY-DAVIS-ORACLE\n"
+              << "        TSC / Human Entropy Laboratory\n\n"
               << " 1. Compare TSC sampling modes\n 2. Machine TSC timing\n 3. Human timing\n"
               << " 4. Machine low-bit analysis\n 5. Human low-bit analysis\n 6. Fixed-delay machine control\n"
               << " 7. Jittered-delay machine control\n 8. MT19937 control\n 9. OS randomness control\n"
               << "10. Multi-lag correlation + mutual information\n 11. Permutation test\n 12. Block stability\n"
               << "13. TempleOS-style reconstruction control\n 14. Human vs machine timing comparison\n"
-              << "15. Automated TSC summary\n\n 0. Exit\n";
+              << "15. Automated TSC summary\n 16. ORACLE MODE (Ask a Question)\n\n 0. Exit\n";
     separator(); std::cout << "Select experiment: ";
 }
 
 int main()
 {
     std::cout << "\n================================================================\n"
-              << "        TSC / HUMAN ENTROPY LABORATORY v3.1\n"
+              << "        TERRY-DAVIS-ORACLE\n"
+              << "        Human will + hardware disturbance = unpredictable entropy\n"
               << "================================================================\n\n";
 #if defined(_M_X64) || defined(__x86_64__) || defined(_M_AMD64)
     std::cout << "Architecture: x86-64\n";
@@ -785,6 +853,7 @@ int main()
                 case 13: experiment_templeos_reconstruction(); break;
                 case 14: experiment_compare_existing(); break;
                 case 15: experiment_summary(); break;
+                case 16: experiment_oracle(); break;
                 default: std::cout << "\nInvalid option.\n"; break;
             }
         } catch (const std::exception& e) { std::cout << "\nError: " << e.what() << "\n"; }
