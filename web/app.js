@@ -8,7 +8,6 @@
 
   const timerEl = document.getElementById("timer-hex");
   const latchEl = document.getElementById("latch-hex");
-  const vocabMeta = document.getElementById("vocab-meta");
   const logEl = document.getElementById("log");
   const form = document.getElementById("ask-form");
   const okayBtn = document.getElementById("okay");
@@ -17,7 +16,6 @@
   let vocab = Array.isArray(window.ORACLE_VOCAB_FALLBACK)
     ? window.ORACLE_VOCAB_FALLBACK.slice()
     : ["YES", "NO", "WAIT", "LOOK CLOSER"];
-  let vocabSource = "embedded fallback";
   let history = [];
 
   function hex64(n) {
@@ -73,7 +71,6 @@
           const words = parseVocab(text);
           if (!words.length) throw new Error("empty");
           vocab = words;
-          vocabSource = paths[i];
         })
         .catch(function () { return tryNext(i + 1); });
     })(0);
@@ -123,10 +120,6 @@
     }
   }
 
-  function setVocabMeta() {
-    vocabMeta.textContent = vocab.length + "  (" + vocabSource + ")";
-  }
-
   form.addEventListener("submit", function (event) {
     event.preventDefault();
     const result = consult(event);
@@ -157,11 +150,7 @@
   }
 
   restore();
-  loadVocab().then(function () {
-    setVocabMeta();
-    render();
-  });
-  setVocabMeta();
+  loadVocab().then(render);
   render();
   tick();
 
